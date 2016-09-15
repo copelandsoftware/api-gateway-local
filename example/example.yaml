@@ -1,0 +1,89 @@
+---
+swagger: "2.0"
+info:
+  version: "2016-09-09T16:09:03Z"
+  title: "i.sensiapi.com"
+host: "dev.i.sensiapi.com"
+schemes:
+- "https"
+paths:
+  /clients/{client_id}:
+    delete:
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "client_id"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        500:
+          description: "500 response"
+        204:
+          description: "204 response"
+        404:
+          description: "404 response"
+      security:
+      - api_key: []
+      x-amazon-apigateway-integration:
+        responses:
+          Not.*:
+            statusCode: "404"
+          default:
+            statusCode: "204"
+          Unknown.*:
+            statusCode: "500"
+        requestTemplates:
+          application/json: "{\"client_id\":\"$input.params('client_id')\",\"action\"\
+            :\"delete\"}"
+        uri: "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:123456789012:function:api-gateway-local/invocations"
+        passthroughBehavior: "when_no_templates"
+        httpMethod: "POST"
+        type: "aws"
+  /salesforce/tokens:
+    get:
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "env"
+        in: "query"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "200 response"
+        404:
+          description: "404 response"
+      security:
+      - api_key: []
+      x-amazon-apigateway-integration:
+        responses:
+          Not.*:
+            statusCode: "404"
+          default:
+            statusCode: "200"
+          Unknown.*:
+            statusCode: "500"
+          Bad.*:
+            statusCode: "400"
+        requestTemplates:
+          application/json: "{\"env\":\"$input.params('env')\",\"action\":\"get\"}"
+        uri: "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:123456789012:function:api-gateway-local/invocations"
+        passthroughBehavior: "when_no_templates"
+        httpMethod: "POST"
+        type: "aws"
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "x-api-key"
+    in: "header"
+definitions:
+  Empty:
+    type: "object"
+    title: "Empty Schema"
+  Error:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+    title: "Error Schema"
