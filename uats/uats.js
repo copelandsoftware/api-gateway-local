@@ -1,5 +1,11 @@
 var mockery = require('mockery');
 var request = require('request-json');
+var expect = require('chai').expect;
+
+var startApiGateway = () => {
+  var apigateway = require('../index.js');
+  return apigateway(require('./test.js'), './uats/example.yaml', 8080)
+}
 
 context('uats', () => {
   context('GET', () => {
@@ -16,19 +22,21 @@ context('uats', () => {
       mockery.registerMock('./test.js', testLambda);
     })
 
-    it('properly sets up examples', done => {
-      var apigateway = require('../index.js');
-      apigateway(require('./test.js'), './uats/example.yaml', 8080, (err, res) => {
-          testLambda.handler = (event, context, callback) => {
-            console.log(context);
-            callback(null, null);
-          };
+    it('Transforms Query Strings at the end of the Request Uri', done => {
+      testLambda.handler = (event, context, callback) => {
+        console.log(event.env);
+        expect(event.env).to.equal('test');
+        callback(null, null);
+      };
 
+      startApiGateway()
+        .then( () => {
           var client = request.createClient('http://localhost:8080/');
-          client.get('salesforce/tokens', (err, res, body) => {
+          client.get('salesforce/tokens?env=test', (err, res, body) => {
+            console.log(body);
             done();
           });
-      })
+        })
     });
   })
 });

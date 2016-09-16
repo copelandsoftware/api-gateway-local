@@ -36,6 +36,8 @@ var parseLambdaName = (method) => {
 }
 
 module.exports = (lambda, swaggerFile, port, callback) => {
+  var deferred = Q.defer();
+
   app.use(function(req, res, next) {
     req.rawBody = '';
     req.setEncoding('utf8');
@@ -47,7 +49,6 @@ module.exports = (lambda, swaggerFile, port, callback) => {
 
   parser.validate(swaggerFile)
     .then(swaggerDef => {
-      console.log(swaggerDef);
       Object.keys(swaggerDef.paths).forEach(path => {
         var curPath = swaggerDef.paths[path];
         Object.keys(curPath).forEach(method => {
@@ -67,17 +68,19 @@ module.exports = (lambda, swaggerFile, port, callback) => {
                 res.end();
               })
               .catch(err => {
-                res.end();
+                console.log(err);
+                throw err;
               });
           });
         })
       })
-      app.listen(port, callback);
+      app.listen(port, () => {
+        deferred.resolve();
+      });
     })
   .catch(err => {
-    callback(err, null);
-    console.log(err);
+    deferred.reject(new Error(err));
   })
 
-  return app;
+  return deferred.promise;
 }

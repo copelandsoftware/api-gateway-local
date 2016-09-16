@@ -13,6 +13,7 @@
     "swagger": "^0.7.5"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "gulp-mocha": "^3.0.1",
     "mockery": "^1.7.0",
     "request-json": "^0.6.1"
