@@ -30,19 +30,9 @@ context('uats', () => {
     })
 
     it('Transforms Query Strings at the end of the Request Uri', done => {
-      var server = {};
-      startApiGateway()
-        .then( (httpServer) => {
-          server = httpServer;
-          return get('salesforce/tokens/?env=test');
-        })
-      .then( (response) => {
+      runTest(() => get('salesforce/tokens/?env=test'), (data) => {
         expect(capturedEvent.env).to.equal('test');
-      })
-      .finally(() => {
-        server.close();
-      })
-      .done(done);
+      }, done);
     });
   })
 });
@@ -59,4 +49,20 @@ var get = resource => {
     }
   });
   return deferred.promise;
+}
+
+var runTest = (testAction, testCase, done) => {
+  var server = {};
+  startApiGateway()
+    .then( (httpServer) => {
+      server = httpServer;
+      return testAction();
+    })
+    .then( response => {
+      testCase(response);
+    })
+    .finally(() => {
+      server.close();
+    })
+    .done(done);
 }
