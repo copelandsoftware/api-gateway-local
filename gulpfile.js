@@ -1,12 +1,16 @@
 var gulp  = require('gulp');
-var gls   = require('gulp-live-server');
-var exec = require('child_process').exec;
+var mocha = require('gulp-mocha');
+var gutil = require('gulp-util');
 
 gulp.task('default', () => {
-  gulp.watch(['*'], ['test']);
+  gulp.watch(['src/**', 'test/**, uats/**'], ['uats']);
 });
 
-gulp.task('test', () => {
-  var server = gls.new('./example/app.js');
-  server.start();
+gulp.task('uats', function(callback) {
+  gulp.src(['uats/*.js'], { read: false })
+    .pipe(mocha({ ui: 'bdd', reporter: 'spec', growl: 'true', timeout: 15000}))
+    .on('error', gutil.log)
+    .once('end', function () {
+      process.exit();
+    });
 });
