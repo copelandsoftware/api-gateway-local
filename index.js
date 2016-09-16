@@ -57,8 +57,6 @@ module.exports = (lambda, swaggerFile, port, callback) => {
 
           app[method.toLowerCase()](route, (req, res) => {
             var lambdaName = parseLambdaName(curPath[method]);
-            console.log(`${lambdaName}:  ${__dirname.indexOf(lambdaName) <= 0}`)
-
             if ( __dirname.indexOf(lambdaName) <= -1 ) {
               throw new Error('Invoked API that is not part of current lambda project')
             }
@@ -69,7 +67,7 @@ module.exports = (lambda, swaggerFile, port, callback) => {
               })
               .catch(err => {
                 console.log(err);
-                throw err;
+                res.end();
               });
           });
         })

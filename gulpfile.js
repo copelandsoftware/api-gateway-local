@@ -8,6 +8,6 @@ gulp.task('default', () => {
 
 gulp.task('uats', function(callback) {
   gulp.src(['uats/*.js'], { read: false })
-    .pipe(mocha({ ui: 'bdd', reporter: 'spec', growl: 'true', timeout: 15000}))
+    .pipe(mocha({ ui: 'bdd', reporter: 'spec', growl: 'true', timeout: 1000}))
     .on('error', gutil.log)
 });

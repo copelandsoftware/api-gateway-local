@@ -3,23 +3,23 @@ var request = require('request-json');
 var expect = require('chai').expect;
 var Q = require('q');
 
+var server = {};
 var startApiGateway = () => {
   var apigateway = require('../index.js');
   return apigateway(require('./test.js'), './uats/example.yaml', 8080)
+    .then(httpServer => {
+      server = httpServer;
+    })
 }
 
 context('uats', () => {
   context('GET', () => {
 
     var capturedEvent = {};
-    var testLambda = {
-      handler: (event, context, callback) => {
-        capturedEvent = event;
-        callback(null, null);
-      }
-    };
+    var testLambda = {};
 
-    beforeEach(() => {
+    before(() => {
+      console.log("entry");
       mockery.enable({
         warnOnReplace: false,
         warnOnUnregistered: false,
@@ -27,13 +27,39 @@ context('uats', () => {
       });
 
       mockery.registerMock('./test.js', testLambda);
+      return startApiGateway();
+    })
+
+    after(() => {
+      console.log("exit");
+      server.close();
     })
 
     it('Transforms Query Strings at the end of the Request Uri', done => {
-      runTest(() => get('salesforce/tokens/?env=test'), (data) => {
-        expect(capturedEvent.env).to.equal('test');
-      }, done);
+      testLambda.handler = (event, context, callback) => {
+        capturedEvent = event;
+        callback(null, null);
+      };
+      get('salesforce/tokens/?env=test')
+      .then(data => {
+          console.log(capturedEvent);
+          expect(capturedEvent.env).to.equal('test');
+      })
+      .done(done);
     });
+
+    it('Transforms Status Code', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback('Not Found', null);
+      };
+
+      get('salesforce/tokens/?env=test')
+      .then(data => {
+          console.log(data.res.statusCode);
+          expect(data.res.statusCode).to.equal(404);
+      })
+      .done(done);
+    })
   })
 });
 
@@ -49,20 +75,4 @@ var get = resource => {
     }
   });
   return deferred.promise;
-}
-
-var runTest = (testAction, testCase, done) => {
-  var server = {};
-  startApiGateway()
-    .then( (httpServer) => {
-      server = httpServer;
-      return testAction();
-    })
-    .then( response => {
-      testCase(response);
-    })
-    .finally(() => {
-      server.close();
-    })
-    .done(done);
 }
