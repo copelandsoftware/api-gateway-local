@@ -72,6 +72,42 @@ paths:
         passthroughBehavior: "when_no_templates"
         httpMethod: "POST"
         type: "aws"
+  /salesforce:
+    get:
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "env"
+        in: "query"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "200 response"
+        404:
+          description: "404 response"
+      security:
+      - api_key: []
+      x-amazon-apigateway-integration:
+        responses:
+          Not.*:
+            statusCode: "404"
+          default:
+            statusCode: "200"
+            responseTemplates:
+              application/json: "{}"
+            responseParameters:
+              method.response.header.Location: "integration.response.body.location"
+          Unknown.*:
+            statusCode: "500"
+          Bad.*:
+            statusCode: "400"
+        requestTemplates:
+          application/json: "{\"action\":\"get\"}"
+        uri: "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:123456789012:function:api-gateway-local/invocations"
+        passthroughBehavior: "when_no_templates"
+        httpMethod: "POST"
+        type: "aws"
 securityDefinitions:
   api_key:
     type: "apiKey"

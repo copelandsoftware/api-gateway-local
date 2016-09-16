@@ -66,7 +66,6 @@ module.exports = (lambda, swaggerFile, port, callback) => {
                 res.end();
               })
               .catch(err => {
-                console.log(err);
                 res.end();
               });
           });

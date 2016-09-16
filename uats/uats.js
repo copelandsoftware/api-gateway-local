@@ -14,7 +14,6 @@ var startApiGateway = () => {
 
 context('uats', () => {
   context('GET', () => {
-
     var capturedEvent = {};
     var testLambda = {};
 
@@ -35,17 +34,30 @@ context('uats', () => {
       server.close();
     })
 
-    it('Transforms Query Strings at the end of the Request Uri', done => {
+    it('Transforms body to include Query Params', done => {
       testLambda.handler = (event, context, callback) => {
         capturedEvent = event;
         callback(null, null);
       };
       get('salesforce/tokens/?env=test')
-      .then(data => {
+        .then(data => {
           console.log(capturedEvent);
           expect(capturedEvent.env).to.equal('test');
-      })
-      .done(done);
+        })
+        .done(done);
+    });
+
+    it('Transforms Payload to add properties', done => {
+      testLambda.handler = (event, context, callback) => {
+        capturedEvent = event;
+        callback(null, null);
+      };
+
+      get('salesforce/tokens/?env=test')
+        .then(data => {
+          expect(capturedEvent.action).to.equal('get');
+        })
+        .done(done);
     });
 
     it('Transforms Status Code', done => {
@@ -54,12 +66,49 @@ context('uats', () => {
       };
 
       get('salesforce/tokens/?env=test')
-      .then(data => {
+        .then(data => {
           console.log(data.res.statusCode);
           expect(data.res.statusCode).to.equal(404);
-      })
-      .done(done);
+        })
+        .done(done);
     })
+
+    it('Passes Through Response Body if no transform specified', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback(null, { token:  "test" });
+      };
+
+      get('salesforce/tokens/?env=test')
+        .then(data => {
+          expect(data.body).to.deep.equal({ token: "test" });
+        })
+        .done(done);
+    })
+
+    it('Transforms Response can clear body', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback(null, { location:  "test" });
+      };
+
+      get('salesforce/')
+        .then(data => {
+          expect(data.body).to.deep.equal({});
+        })
+        .done(done);
+
+    it('Transforms Response can clear body', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback(null, { location:  "test" });
+      };
+
+      get('salesforce/')
+        .then(data => {
+          expect(data.res.get('location')).to.equal('test');
+          expect(data.body).to.deep.equal({});
+        })
+        .done(done);
+    });
+    });
   })
 });
 
