@@ -1,6 +1,7 @@
 var mockery = require('mockery');
 var request = require('request-json');
 var expect = require('chai').expect;
+var Q = require('q');
 
 var startApiGateway = () => {
   var apigateway = require('../index.js');
@@ -10,7 +11,13 @@ var startApiGateway = () => {
 context('uats', () => {
   context('GET', () => {
 
-    var testLambda = {};
+    var capturedEvent = {};
+    var testLambda = {
+      handler: (event, context, callback) => {
+        capturedEvent = event;
+        callback(null, null);
+      }
+    };
 
     beforeEach(() => {
       mockery.enable({
@@ -23,20 +30,33 @@ context('uats', () => {
     })
 
     it('Transforms Query Strings at the end of the Request Uri', done => {
-      testLambda.handler = (event, context, callback) => {
-        console.log(event.env);
-        expect(event.env).to.equal('test');
-        callback(null, null);
-      };
-
+      var server = {};
       startApiGateway()
-        .then( () => {
-          var client = request.createClient('http://localhost:8080/');
-          client.get('salesforce/tokens?env=test', (err, res, body) => {
-            console.log(body);
-            done();
-          });
+        .then( (httpServer) => {
+          server = httpServer;
+          return get('salesforce/tokens/?env=test');
         })
+      .then( (response) => {
+        expect(capturedEvent.env).to.equal('test');
+      })
+      .finally(() => {
+        server.close();
+      })
+      .done(done);
     });
   })
 });
+
+var get = resource => {
+  var deferred = Q.defer();
+
+  var client = request.createClient('http://localhost:8080/');
+  client.get('salesforce/tokens?env=test', (err, res, body) => {
+    if ( err ) {
+      deferred.reject(err);
+    } else {
+      deferred.resolve({res: res, body: body})
+    }
+  });
+  return deferred.promise;
+}

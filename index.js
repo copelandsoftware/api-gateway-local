@@ -74,8 +74,8 @@ module.exports = (lambda, swaggerFile, port, callback) => {
           });
         })
       })
-      app.listen(port, () => {
-        deferred.resolve();
+      var httpServer = app.listen(port, () => {
+        deferred.resolve(httpServer);
       });
     })
   .catch(err => {
