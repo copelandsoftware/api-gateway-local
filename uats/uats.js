@@ -129,7 +129,7 @@ var get = resource => {
   var deferred = Q.defer();
 
   var client = request.createClient('http://localhost:8080/');
-  client.get('salesforce/tokens?env=test', (err, res, body) => {
+  client.get(resource, (err, res, body) => {
     if ( err ) {
       deferred.reject(err);
     } else {
