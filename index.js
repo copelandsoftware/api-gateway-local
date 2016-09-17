@@ -38,7 +38,7 @@ var parseLambdaName = (method) => {
 
 var buildEventFromRequestTemplate = (req, method) => {
   var templates = method['x-amazon-apigateway-integration'].requestTemplates['application/json'];
-  var event = JSON.parse(mappingTemplate({
+  return JSON.parse(mappingTemplate({
     template: templates,
     payload: req.rawBody,
     params: {
@@ -47,7 +47,20 @@ var buildEventFromRequestTemplate = (req, method) => {
       querystring: req.query
     }
   }));
-  return event;
+}
+
+var transformStatus = (body, method) => {
+  var responses = method['x-amazon-apigateway-integration'].responses;
+  var statusCode = null;
+  Object.keys(responses).forEach(response => {
+    var result = new RegExp(response).test(body)
+    if ( result ) {
+      console.log(`Found Matching Status Code:  ${responses[response].statusCode}`)
+      statusCode = responses[response].statusCode;
+    }
+  });
+
+  return statusCode ? statusCode : responses.default.statusCode;
 }
 
 module.exports = (lambda, swaggerFile, port, callback) => {
@@ -80,10 +93,13 @@ module.exports = (lambda, swaggerFile, port, callback) => {
 
             Q.ninvoke(lambda, 'handler', event, context)
               .then(response => {
-                res.end();
+                console.log('success');
+                res.status(transformStatus(response, curPath[method])).end();
               })
               .catch(err => {
-                res.end();
+                var statusCode = transformStatus(err, curPath[method]);
+                console.log(`${err}:  ${statusCode}`);
+                res.status(statusCode).end();
               });
           });
         })
