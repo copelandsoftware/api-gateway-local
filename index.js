@@ -3,6 +3,7 @@ var express = require('express');
 var fs = require('fs');
 var Q = require('q');
 var app = express();
+var mappingTemplate = require("api-gateway-mapping-template");
 
 var context = {
   done: (err, obj) => {
@@ -35,6 +36,20 @@ var parseLambdaName = (method) => {
   return lambdaName;
 }
 
+var buildEventFromRequestTemplate = (req, method) => {
+  var templates = method['x-amazon-apigateway-integration'].requestTemplates['application/json'];
+  var event = JSON.parse(mappingTemplate({
+    template: templates,
+    payload: req.rawBody,
+    params: {
+      header: req.headers,
+      path: req.params,
+      querystring: req.query
+    }
+  }));
+  return event;
+}
+
 module.exports = (lambda, swaggerFile, port, callback) => {
   var deferred = Q.defer();
 
@@ -61,7 +76,9 @@ module.exports = (lambda, swaggerFile, port, callback) => {
               throw new Error('Invoked API that is not part of current lambda project')
             }
 
-            Q.ninvoke(lambda, 'handler', null, context)
+            var event = buildEventFromRequestTemplate(req, curPath[method]);
+
+            Q.ninvoke(lambda, 'handler', event, context)
               .then(response => {
                 res.end();
               })
