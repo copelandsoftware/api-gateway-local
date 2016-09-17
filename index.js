@@ -63,6 +63,30 @@ var transformStatus = (body, method) => {
   return statusCode ? statusCode : responses.default;
 }
 
+var transformResponse = (res, method, body) => {
+  var status = transformStatus(body, method);
+  res.status(status.statusCode).json(body);
+}
+
+var addAndHandleRequest = (route, verb, method, lambda) => {
+  app[verb.toLowerCase()](route, (req, res) => {
+    var lambdaName = parseLambdaName(method);
+    if ( __dirname.indexOf(lambdaName) <= -1 ) {
+      throw new Error('Invoked API that is not part of current lambda project')
+    }
+
+    var event = buildEventFromRequestTemplate(req, method);
+
+    Q.ninvoke(lambda, 'handler', event, context)
+      .then(body => {
+        transformResponse(res, method, body);
+      })
+      .catch(err => {
+        transformResponse(res, method, err);
+      });
+  });
+}
+
 module.exports = (lambda, swaggerFile, port, callback) => {
   var deferred = Q.defer();
 
@@ -79,28 +103,11 @@ module.exports = (lambda, swaggerFile, port, callback) => {
     .then(swaggerDef => {
       Object.keys(swaggerDef.paths).forEach(path => {
         var curPath = swaggerDef.paths[path];
-        Object.keys(curPath).forEach(method => {
+        Object.keys(curPath).forEach(verb => {
           route = expressify_path(path);
-          console.log(`${method} ${route}`)
+          console.log(`${verb} ${route}`)
 
-          app[method.toLowerCase()](route, (req, res) => {
-            var lambdaName = parseLambdaName(curPath[method]);
-            if ( __dirname.indexOf(lambdaName) <= -1 ) {
-              throw new Error('Invoked API that is not part of current lambda project')
-            }
-
-            var event = buildEventFromRequestTemplate(req, curPath[method]);
-
-            Q.ninvoke(lambda, 'handler', event, context)
-              .then(response => {
-                var status = transformStatus(response, curPath[method]);
-                res.status(status.statusCode).json(response);
-              })
-              .catch(err => {
-                var status = transformStatus(err, curPath[method]);
-                res.status(status.statusCode).json(err);
-              });
-          });
+          addAndHandleRequest(route, verb, curPath[verb], lambda);
         })
       })
       var httpServer = app.listen(port, () => {
