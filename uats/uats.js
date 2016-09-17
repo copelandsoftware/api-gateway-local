@@ -47,6 +47,19 @@ context('uats', () => {
         .done(done);
     });
 
+    it('Transforms body to include Paramters from Request Uri', done => {
+      testLambda.handler = (event, context, callback) => {
+        capturedEvent = event;
+        callback(null, null);
+      };
+      get('salesforce/test/tokens')
+        .then(data => {
+          console.log(capturedEvent);
+          expect(capturedEvent.env).to.equal('test');
+        })
+        .done(done);
+    });
+
     it('Transforms Payload to add properties', done => {
       testLambda.handler = (event, context, callback) => {
         capturedEvent = event;
@@ -95,6 +108,7 @@ context('uats', () => {
           expect(data.body).to.deep.equal({});
         })
         .done(done);
+    });
 
     it('Transforms Response can clear body', done => {
       testLambda.handler = (event, context, callback) => {
@@ -107,7 +121,6 @@ context('uats', () => {
           expect(data.body).to.deep.equal({});
         })
         .done(done);
-    });
     });
   })
 });
