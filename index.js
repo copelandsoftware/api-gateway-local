@@ -65,6 +65,12 @@ var transformStatus = (body, method) => {
 
 var transformResponse = (res, method, body) => {
   var status = transformStatus(body, method);
+  if ( status.responseTemplates ) {
+    body = JSON.parse(mappingTemplate({
+      template: status.responseTemplates['application/json'],
+      payload: body
+    }));
+  }
   res.status(status.statusCode).json(body);
 }
 
