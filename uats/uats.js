@@ -110,7 +110,7 @@ context('uats', () => {
         .done(done);
     });
 
-    it('Transforms Response can clear body', done => {
+    it('Transforms Response Add Headers', done => {
       testLambda.handler = (event, context, callback) => {
         callback(null, { location:  "test" });
       };

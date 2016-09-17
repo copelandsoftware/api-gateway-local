@@ -56,11 +56,11 @@ var transformStatus = (body, method) => {
     var result = new RegExp(response).test(body)
     if ( result ) {
       console.log(`Found Matching Status Code:  ${responses[response].statusCode}`)
-      statusCode = responses[response].statusCode;
+      statusCode = responses[response];
     }
   });
 
-  return statusCode ? statusCode : responses.default.statusCode;
+  return statusCode ? statusCode : responses.default;
 }
 
 module.exports = (lambda, swaggerFile, port, callback) => {
@@ -93,13 +93,12 @@ module.exports = (lambda, swaggerFile, port, callback) => {
 
             Q.ninvoke(lambda, 'handler', event, context)
               .then(response => {
-                console.log('success');
-                res.status(transformStatus(response, curPath[method])).end();
+                var status = transformStatus(response, curPath[method]);
+                res.status(status.statusCode).json(response);
               })
               .catch(err => {
-                var statusCode = transformStatus(err, curPath[method]);
-                console.log(`${err}:  ${statusCode}`);
-                res.status(statusCode).end();
+                var status = transformStatus(err, curPath[method]);
+                res.status(status.statusCode).json(err);
               });
           });
         })
@@ -108,9 +107,9 @@ module.exports = (lambda, swaggerFile, port, callback) => {
         deferred.resolve(httpServer);
       });
     })
-  .catch(err => {
-    deferred.reject(new Error(err));
-  })
+    .catch(err => {
+      deferred.reject(new Error(err));
+    })
 
   return deferred.promise;
 }
