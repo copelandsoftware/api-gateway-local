@@ -6,17 +6,11 @@ var app = express();
 var mappingTemplate = require("api-gateway-mapping-template");
 
 var context = {
-  done: (err, obj) => {
-    throw new Error('Using Context Succeed/Fail are Deprecated when using NodeJS 4.3 on Lambda');
-  },
+  done: (err, obj) => { throw new Error('Using Context Succeed/Fail are Deprecated when using NodeJS 4.3 on Lambda'); },
 
-  success: (obj) => {
-    done(null, obj);
-  },
+  success: (obj) => { done(null, obj); },
 
-  fail: (err) => {
-    done(err, null);
-  }
+  fail: (err) => { done(err, null); }
 }
 
 var expressify_path = path => {

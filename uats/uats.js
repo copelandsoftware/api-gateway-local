@@ -117,7 +117,7 @@ context('uats', () => {
 
       get('salesforce/')
         .then(data => {
-          expect(data.res.get('location')).to.equal('test');
+          expect(data.res.headers['location']).to.equal('test');
           expect(data.body).to.deep.equal({});
         })
         .done(done);
