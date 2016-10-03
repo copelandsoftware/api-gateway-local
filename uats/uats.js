@@ -86,14 +86,14 @@ context('uats', () => {
         .done(done);
     })
 
-    it('Passes Through Response Body if no transform specified', done => {
+    it('Wraps error responses in errorMessage per Amazon', done => {
       testLambda.handler = (event, context, callback) => {
         callback(null, { token:  "test" });
       };
 
       get('salesforce/tokens/?env=test')
         .then(data => {
-          expect(data.body).to.deep.equal({ token: "test" });
+          expect(data.body).to.deep.equal({errorMessage: { token: "test" }});
         })
         .done(done);
     })

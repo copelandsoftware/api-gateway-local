@@ -64,6 +64,8 @@ var transformResponse = (res, method, body) => {
       template: status.responseTemplates['application/json'],
       payload: body
     }));
+  } else {
+    body = { errorMessage: body };
   }
   res.status(status.statusCode).json(body);
 }
