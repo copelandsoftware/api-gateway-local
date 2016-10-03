@@ -111,10 +111,6 @@ var transformResponse = (res, method, body) => {
 var addAndHandleRequest = (route, verb, method, lambda) => {
   app[verb.toLowerCase()](route, (req, res) => {
     var lambdaName = parseLambdaName(method);
-    if ( __dirname.indexOf(lambdaName) <= -1 ) {
-      throw new Error('Invoked API that is not part of current lambda project')
-    }
-
     var event = buildEventFromRequestTemplate(req, method);
 
     Q.ninvoke(lambda, 'handler', event, context)
