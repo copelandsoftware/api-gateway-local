@@ -49,7 +49,6 @@ var transformStatus = (body, method) => {
   Object.keys(responses).forEach(response => {
     var result = new RegExp(response).test(body)
     if ( result ) {
-      console.log(`Found Matching Status Code:  ${responses[response].statusCode}`)
       statusCode = responses[response];
     }
   });
@@ -141,7 +140,6 @@ module.exports = (lambda, swaggerFile, port, callback) => {
         var curPath = swaggerDef.paths[path];
         Object.keys(curPath).forEach(verb => {
           route = expressify_path(path);
-          console.log(`${verb} ${route}`)
 
           addAndHandleRequest(route, verb, curPath[verb], lambda);
         })
