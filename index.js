@@ -57,8 +57,46 @@ var transformStatus = (body, method) => {
   return statusCode ? statusCode : responses.default;
 }
 
+Object.byString = function(o, s) {
+  s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+  s = s.replace(/^\./, '');           // strip a leading dot
+  var a = s.split('.');
+  for (var i = 0, n = a.length; i < n; ++i) {
+    var k = a[i];
+    if (k in o) {
+      o = o[k];
+    } else {
+      return;
+    }
+  }
+  return o;
+}
+
+var transformResponseParameters = (res, status, body) => {
+  if ( status.responseParameters ) {
+    var response = {
+      integration: {
+        response:  {
+          body: body
+        }
+      }
+    };
+    Object.keys(status.responseParameters).forEach(param => {
+      var value = Object.byString(response, status.responseParameters[param]);
+      if ( value && param.toLowerCase().indexOf('header') !== -1 ) {
+        var params = param.split('.');
+        var headerName = params[params.length - 1];
+        res.set(headerName, value);
+      }
+    })
+  }
+}
+
 var transformResponse = (res, method, body) => {
   var status = transformStatus(body, method);
+
+  transformResponseParameters(res, status, body);
+
   if ( status.responseTemplates ) {
     body = JSON.parse(mappingTemplate({
       template: status.responseTemplates['application/json'],
