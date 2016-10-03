@@ -86,14 +86,26 @@ context('uats', () => {
         .done(done);
     })
 
-    it('Wraps error responses in errorMessage per Amazon', done => {
+    it('Wraps error responses in errorMessage per Amazon if responseTemplate not specified', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback({ token:  "test" }, null);
+      };
+
+      get('salesforce/tokens/?env=test')
+        .then(data => {
+          expect(data.body).to.deep.equal({errorMessage: { token: "test" } });
+        })
+        .done(done);
+    })
+
+    it('does not wrap success responses when no template specified', done => {
       testLambda.handler = (event, context, callback) => {
         callback(null, { token:  "test" });
       };
 
       get('salesforce/tokens/?env=test')
         .then(data => {
-          expect(data.body).to.deep.equal({errorMessage: { token: "test" }});
+          expect(data.body).to.deep.equal({ token: "test" });
         })
         .done(done);
     })

@@ -91,7 +91,7 @@ var transformResponseParameters = (res, status, body) => {
   }
 }
 
-var transformResponse = (res, method, body) => {
+var transformResponse = (res, method, body, isError) => {
   var status = transformStatus(body, method);
 
   transformResponseParameters(res, status, body);
@@ -101,7 +101,7 @@ var transformResponse = (res, method, body) => {
       template: status.responseTemplates['application/json'],
       payload: body
     }));
-  } else {
+  } else if (isError) {
     body = { errorMessage: body };
   }
   res.status(status.statusCode).json(body);
@@ -117,7 +117,7 @@ var addAndHandleRequest = (route, verb, method, lambda) => {
         transformResponse(res, method, body);
       })
       .catch(err => {
-        transformResponse(res, method, err);
+        transformResponse(res, method, err, true);
       });
   });
 }
