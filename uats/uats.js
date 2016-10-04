@@ -153,7 +153,7 @@ context('uats', () => {
         .done(done);
     })
 
-    it('handles WWW Form Encoded  Posts', done => {
+    it.only('handles WWW Form Encoded  Posts', done => {
       testLambda.handler = (event, context, callback) => {
         console.log(event);
         if ( event.form_data ) {
@@ -162,28 +162,28 @@ context('uats', () => {
         callback('Forbidden')
       }
 
-      post('/login', { username: 'test' })
+      post_form('/login', { username: 'test' })
         .then(data => {
           expect(data.res.statusCode).to.equal(302);
-          expect(data.body).to.deep.equal({ payload: { username: 'test' }})
+          expect(data.body).to.deep.equal({ form_data: { username: 'test' }})
         })
         .done(done);
     })
   })
 });
 
-//var post_form = (resource, data) => {
-//  var deferred = Q.defer();
-//  var base = 'http://localhost:8080/'
-//  var http.post({ url: `${base}${resource}`, form: data}, (err, res, body) => {
-//    if ( err ) {
-//      deferred.reject(err);
-//    } else {
-//      deferred.resolve({res: res, body: body})
-//    }
-//  })
-//  return deferred.promise;
-//}
+var post_form = (resource, data) => {
+  var deferred = Q.defer();
+  var base = 'http://localhost:8080'
+  http.post({ url: `${base}${resource}`, form: data}, (err, res, body) => {
+    if ( err ) {
+      deferred.reject(err);
+    } else {
+      deferred.resolve({res: res, body: body})
+    }
+  })
+  return deferred.promise;
+}
 
 var post = (resource, data) => {
   var deferred = Q.defer();
