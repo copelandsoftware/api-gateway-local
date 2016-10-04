@@ -1,5 +1,6 @@
 var mockery = require('mockery');
 var request = require('request-json');
+var http = require('request');
 var expect = require('chai').expect;
 var Q = require('q');
 
@@ -134,8 +135,68 @@ context('uats', () => {
         })
         .done(done);
     });
+
+    it('handles JSON Posts', done => {
+      testLambda.handler = (event, context, callback) => {
+        console.log(event);
+        if ( event.payload ) {
+          return callback(null, event);
+        }
+        callback('Forbidden')
+      }
+
+      post('/login', { username: 'test' })
+        .then(data => {
+          expect(data.res.statusCode).to.equal(302);
+          expect(data.body).to.deep.equal({ payload: { username: 'test' }})
+        })
+        .done(done);
+    })
+
+    it('handles WWW Form Encoded  Posts', done => {
+      testLambda.handler = (event, context, callback) => {
+        console.log(event);
+        if ( event.form_data ) {
+          return callback(null, event);
+        }
+        callback('Forbidden')
+      }
+
+      post('/login', { username: 'test' })
+        .then(data => {
+          expect(data.res.statusCode).to.equal(302);
+          expect(data.body).to.deep.equal({ payload: { username: 'test' }})
+        })
+        .done(done);
+    })
   })
 });
+
+//var post_form = (resource, data) => {
+//  var deferred = Q.defer();
+//  var base = 'http://localhost:8080/'
+//  var http.post({ url: `${base}${resource}`, form: data}, (err, res, body) => {
+//    if ( err ) {
+//      deferred.reject(err);
+//    } else {
+//      deferred.resolve({res: res, body: body})
+//    }
+//  })
+//  return deferred.promise;
+//}
+
+var post = (resource, data) => {
+  var deferred = Q.defer();
+  var client = request.createClient('http://localhost:8080/');
+  client.post(resource, data, (err, res, body) => {
+    if ( err ) {
+      deferred.reject(err);
+    } else {
+      deferred.resolve({res: res, body: body})
+    }
+  });
+  return deferred.promise;
+}
 
 var get = resource => {
   var deferred = Q.defer();
