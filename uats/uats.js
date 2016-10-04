@@ -170,7 +170,20 @@ context('uats', () => {
         })
         .done(done);
     })
-  })
+
+    it('wraps errorMessage before processing template', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback('invalid', null);
+      }
+
+      post('/login', { username: 'test' })
+        .then(data => {
+          expect(data.res.statusCode).to.equal(400);
+          expect(data.body).to.deep.equal({ error: 'invalid' })
+        })
+        .done(done);
+    });
+  });
 });
 
 var post_form = (resource, data) => {

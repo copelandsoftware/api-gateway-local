@@ -171,6 +171,10 @@ paths:
             statusCode: "403"
           Unauthorized.*:
             statusCode: "401"
+          .*(invalid|unauthorized).*:
+            statusCode: "400"
+            responseTemplates:
+              application/json: "{ \"error\": $input.json('$.errorMessage') }"
         requestTemplates:
           application/json: "{\"payload\": $input.json('$')}"
           application/x-www-form-urlencoded: "{\"form_data\": $input.json('$')}"

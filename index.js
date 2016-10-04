@@ -92,14 +92,18 @@ var transformResponse = (res, method, body, contentType, isError) => {
   transformResponseParameters(res, status, body);
   res.set('Content-Type', 'application/json');
 
-  if ( status.responseTemplates ) {
-    body = JSON.parse(mappingTemplate({
-      template: status.responseTemplates[contentType] || status.responseTemplates['application/json'],
-      payload: body
-    }));
-  } else if (isError) {
+  if (isError) {
     body = { errorMessage: body };
   }
+
+  if ( status.responseTemplates ) {
+    console.log(body);
+    body = JSON.parse(mappingTemplate({
+      template: status.responseTemplates[contentType] || status.responseTemplates['application/json'],
+      payload: body instanceof Object ? JSON.stringify(body) : body
+    }));
+  }
+
   res.status(status.statusCode).send(body);
 }
 
