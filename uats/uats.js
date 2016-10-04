@@ -153,7 +153,7 @@ context('uats', () => {
         .done(done);
     })
 
-    it.only('handles WWW Form Encoded  Posts', done => {
+    it('handles WWW Form Encoded  Posts', done => {
       testLambda.handler = (event, context, callback) => {
         console.log(event);
         if ( event.form_data ) {
