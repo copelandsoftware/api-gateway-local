@@ -24,14 +24,9 @@ var expressify_path = path => {
     .join('/');
 }
 
-var parseLambdaName = (method) => {
-  var lambdaUri = method['x-amazon-apigateway-integration'].uri;
-  var lambdaName = lambdaUri.replace(/.*function:/, '').replace(/\/.*/, '');
-  return lambdaName;
-}
-
-var buildEventFromRequestTemplate = (req, method) => {
-  var templates = method['x-amazon-apigateway-integration'].requestTemplates['application/json'];
+var buildEventFromRequestTemplate = (req, method, contentType) => {
+  var requestTemplates = method['x-amazon-apigateway-integration'].requestTemplates;
+  var templates = requestTemplates[contentType] || requestTemplates['application/json'];
   return JSON.parse(mappingTemplate({
     template: templates,
     payload: req.rawBody,
@@ -91,33 +86,35 @@ var transformResponseParameters = (res, status, body) => {
   }
 }
 
-var transformResponse = (res, method, body, isError) => {
+var transformResponse = (res, method, body, contentType, isError) => {
   var status = transformStatus(body, method);
 
   transformResponseParameters(res, status, body);
+  res.set('Content-Type', 'application/json');
 
   if ( status.responseTemplates ) {
     body = JSON.parse(mappingTemplate({
-      template: status.responseTemplates['application/json'],
+      template: status.responseTemplates[contentType] || status.responseTemplates['application/json'],
       payload: body
     }));
   } else if (isError) {
     body = { errorMessage: body };
   }
-  res.status(status.statusCode).json(body);
+  res.status(status.statusCode).send(body);
 }
 
 var addAndHandleRequest = (route, verb, method, lambda) => {
   app[verb.toLowerCase()](route, (req, res) => {
-    var lambdaName = parseLambdaName(method);
-    var event = buildEventFromRequestTemplate(req, method);
+    var contentType = req.headers['content-type'] || 'application/json';
+    console.log('handling event');
+    var event = buildEventFromRequestTemplate(req, method, contentType);
 
     Q.ninvoke(lambda, 'handler', event, context)
       .then(body => {
-        transformResponse(res, method, body);
+        transformResponse(res, method, body, contentType);
       })
       .catch(err => {
-        transformResponse(res, method, err, true);
+        transformResponse(res, method, err, contentType, true);
       });
   });
 }

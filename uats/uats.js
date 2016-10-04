@@ -165,7 +165,8 @@ context('uats', () => {
       post_form('/login', { username: 'test' })
         .then(data => {
           expect(data.res.statusCode).to.equal(302);
-          expect(data.body).to.deep.equal({ form_data: { username: 'test' }})
+          // request does not auto parse the body for us.  request-json (above test) does.
+          expect(JSON.parse(data.body)).to.deep.equal({ form_data: "username=test" })
         })
         .done(done);
     })
