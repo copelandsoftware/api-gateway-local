@@ -34,6 +34,10 @@ var buildEventFromRequestTemplate = (req, method, contentType) => {
       header: req.headers,
       path: req.params,
       querystring: req.query
+    },
+    context: {
+      resourcePath: req.originalUrl,
+      httpMethod: req.method
     }
   }));
 }
