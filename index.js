@@ -150,6 +150,7 @@ module.exports = (lambda, swaggerFile, port, callback) => {
         })
       })
       var httpServer = app.listen(port, () => {
+        httpServer.port = port;
         deferred.resolve(httpServer);
       });
     })
