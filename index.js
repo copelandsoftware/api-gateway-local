@@ -5,6 +5,10 @@ var Q = require('q');
 var app = express();
 var mappingTemplate = require("api-gateway-mapping-template");
 
+function randomInt (low, high) {
+    return Math.floor(Math.random() * (high - low + 1) + low);
+}
+
 var context = {
   done: (err, obj) => { throw new Error('Using Context Succeed/Fail are Deprecated when using NodeJS 4.3 on Lambda'); },
 
@@ -129,6 +133,7 @@ var addAndHandleRequest = (route, verb, method, lambda) => {
 
 module.exports = (lambda, swaggerFile, port, callback) => {
   var deferred = Q.defer();
+  const listenPort = port ? port : randomInt(9000, 10000);
 
   app.use(function(req, res, next) {
     req.rawBody = '';
@@ -149,8 +154,8 @@ module.exports = (lambda, swaggerFile, port, callback) => {
           addAndHandleRequest(route, verb, curPath[verb], lambda);
         })
       })
-      var httpServer = app.listen(port, () => {
-        httpServer.port = port;
+      var httpServer = app.listen(listenPort, () => {
+        httpServer.port = listenPort;
         deferred.resolve(httpServer);
       });
     })
