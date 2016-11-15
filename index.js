@@ -28,7 +28,7 @@ var expressify_path = path => {
     .join('/');
 }
 
-var buildEventFromRequestTemplate = (req, method, contentType) => {
+var buildEventFromRequestTemplate = (path, req, method, contentType) => {
   var requestTemplates = method['x-amazon-apigateway-integration'].requestTemplates;
   var templates = requestTemplates[contentType] || requestTemplates['application/json'];
   return JSON.parse(mappingTemplate({
@@ -40,7 +40,7 @@ var buildEventFromRequestTemplate = (req, method, contentType) => {
       querystring: req.query
     },
     context: {
-      resourcePath: req.originalUrl,
+      resourcePath: path,
       httpMethod: req.method
     }
   }));
@@ -101,6 +101,9 @@ var transformResponse = (res, method, body, contentType, isError) => {
   res.set('Content-Type', 'application/json');
 
   if (isError) {
+    if ( typeof body === 'object' ) {
+      body = body.toString();
+    }
     body = { errorMessage: body };
   }
 
@@ -115,11 +118,12 @@ var transformResponse = (res, method, body, contentType, isError) => {
   res.status(status.statusCode).send(body);
 }
 
-var addAndHandleRequest = (route, verb, method, lambda) => {
+var addAndHandleRequest = (path, verb, method, lambda) => {
+  const route = expressify_path(path);
   app[verb.toLowerCase()](route, (req, res) => {
     var contentType = req.headers['content-type'] || 'application/json';
     console.log('handling event');
-    var event = buildEventFromRequestTemplate(req, method, contentType);
+    var event = buildEventFromRequestTemplate(path, req, method, contentType);
 
     Q.ninvoke(lambda, 'handler', event, context)
       .then(body => {
@@ -149,9 +153,8 @@ module.exports = (lambda, swaggerFile, port, callback) => {
       Object.keys(swaggerDef.paths).forEach(path => {
         var curPath = swaggerDef.paths[path];
         Object.keys(curPath).forEach(verb => {
-          route = expressify_path(path);
 
-          addAndHandleRequest(route, verb, curPath[verb], lambda);
+          addAndHandleRequest(path, verb, curPath[verb], lambda);
         })
       })
       var httpServer = app.listen(listenPort, () => {
