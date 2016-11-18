@@ -94,7 +94,8 @@ context('uats', () => {
 
       get('salesforce/tokens/?env=test')
         .then(data => {
-          expect(data.body).to.deep.equal({errorMessage: { token: "test" } });
+          var obj = { token: "test" }
+          expect(data.body).to.deep.equal({errorMessage: obj.toString() });
         })
         .done(done);
     })

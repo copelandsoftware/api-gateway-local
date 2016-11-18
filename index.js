@@ -102,7 +102,7 @@ var transformResponse = (res, method, body, contentType, isError) => {
 
   if (isError) {
     if ( typeof body === 'object' ) {
-      body = body.toString();
+      body = body.toString()
     }
     body = { errorMessage: body };
   }
