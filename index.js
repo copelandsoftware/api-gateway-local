@@ -107,7 +107,7 @@ var transformResponse = (res, method, body, contentType, isError) => {
     body = { errorMessage: body };
   }
 
-  if ( status.responseTemplates ) {
+  if ( status.responseTemplates && body ) {
     console.log(body);
     body = JSON.parse(mappingTemplate({
       template: status.responseTemplates[contentType] || status.responseTemplates['application/json'],

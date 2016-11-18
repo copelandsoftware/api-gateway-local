@@ -31,6 +31,8 @@ paths:
             statusCode: "404"
           default:
             statusCode: "204"
+            responseTemplates:
+              application/json: "#set($inputRoot = $input.path('$'))"
           Unknown.*:
             statusCode: "500"
         requestTemplates:

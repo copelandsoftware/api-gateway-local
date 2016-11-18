@@ -14,27 +14,41 @@ var startApiGateway = () => {
 }
 
 context('uats', () => {
+  var capturedEvent = {};
+  var testLambda = {};
+
+  before(() => {
+    console.log("entry");
+    mockery.enable({
+      warnOnReplace: false,
+      warnOnUnregistered: false,
+      useCleanCache: true
+    });
+
+    mockery.registerMock('./test.js', testLambda);
+    return startApiGateway();
+  })
+
+  after(() => {
+    console.log("exit");
+    server.close();
+  })
+
+  context('DELETE', () => {
+    it('Transforms body to include Query Params', done => {
+      testLambda.handler = (event, context, callback) => {
+        callback();
+      };
+
+      del('/clients/1234')
+        .then(data => {
+          expect(data.body).to.equal('')
+        })
+        .done(done);
+    });
+  });
+
   context('GET', () => {
-    var capturedEvent = {};
-    var testLambda = {};
-
-    before(() => {
-      console.log("entry");
-      mockery.enable({
-        warnOnReplace: false,
-        warnOnUnregistered: false,
-        useCleanCache: true
-      });
-
-      mockery.registerMock('./test.js', testLambda);
-      return startApiGateway();
-    })
-
-    after(() => {
-      console.log("exit");
-      server.close();
-    })
-
     it('Transforms body to include Query Params', done => {
       testLambda.handler = (event, context, callback) => {
         capturedEvent = event;
@@ -218,6 +232,20 @@ var get = resource => {
 
   var client = request.createClient('http://localhost:8080/');
   client.get(resource, (err, res, body) => {
+    if ( err ) {
+      deferred.reject(err);
+    } else {
+      deferred.resolve({res: res, body: body})
+    }
+  });
+  return deferred.promise;
+}
+
+var del = resource => {
+  var deferred = Q.defer();
+
+  var client = request.createClient('http://localhost:8080/');
+  client.delete(resource, (err, res, body) => {
     if ( err ) {
       deferred.reject(err);
     } else {
