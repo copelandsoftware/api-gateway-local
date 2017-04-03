@@ -122,7 +122,6 @@ var addAndHandleRequest = (path, verb, method, lambda) => {
   const route = expressify_path(path);
   app[verb.toLowerCase()](route, (req, res) => {
     var contentType = req.headers['content-type'] || 'application/json';
-    console.log('handling event');
     var event = buildEventFromRequestTemplate(path, req, method, contentType);
 
     Q.ninvoke(lambda, 'handler', event, context)
