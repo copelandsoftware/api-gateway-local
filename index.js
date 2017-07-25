@@ -108,7 +108,6 @@ var transformResponse = (res, method, body, contentType, isError) => {
   }
 
   if ( status.responseTemplates && body ) {
-    console.log(body);
     body = JSON.parse(mappingTemplate({
       template: status.responseTemplates[contentType] || status.responseTemplates['application/json'],
       payload: body instanceof Object ? JSON.stringify(body) : body
