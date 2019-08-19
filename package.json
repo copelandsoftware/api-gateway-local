@@ -1,8 +1,17 @@
 {
   "name": "local-api-gateway",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
+  "homepage": "https://github.com/akutta/api-gateway-local",
+  "bugs": {
+    "url": "https://github.com/akutta/api-gateway-local/issues",
+    "email": "akutta.developer@gmail.com"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/akutta/api-gateway-local.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
