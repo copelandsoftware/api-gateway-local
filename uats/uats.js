@@ -18,7 +18,6 @@ context('uats', () => {
   var testLambda = {};
 
   before(() => {
-    console.log("entry");
     mockery.enable({
       warnOnReplace: false,
       warnOnUnregistered: false,
@@ -30,7 +29,6 @@ context('uats', () => {
   })
 
   after(() => {
-    console.log("exit");
     server.close();
   })
 

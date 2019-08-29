@@ -1,12 +1,12 @@
 var gulp  = require('gulp');
 var mocha = require('gulp-mocha');
-var gutil = require('gulp-util');
+var log = require('fancy-log');
 
 gulp.task('default', function(callback) {
-  gulp.src(['uats/*.js'], { read: false })
+  return gulp.src(['uats/*.js'], { read: false })
     .pipe(mocha({ ui: 'bdd', reporter: 'spec', growl: 'true', timeout: 1000}))
-    .on('error', gutil.log)
+    .on('error', log)
     .once('end', function () {
-      process.exit();
+      callback()
     });
 });
