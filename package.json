@@ -1,5 +1,5 @@
 {
-  "name": "local-api-gateway",
+  "name": "api-gateway-local",
   "version": "1.0.2",
   "description": "",
   "main": "index.js",
