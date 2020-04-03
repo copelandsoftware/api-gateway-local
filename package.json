@@ -1,6 +1,6 @@
 {
   "name": "api-gateway-local",
-  "version": "1.0.2",
+  "version": "1.1.3",
   "description": "",
   "main": "index.js",
   "homepage": "https://github.com/akutta/api-gateway-local",

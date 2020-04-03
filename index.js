@@ -114,7 +114,7 @@ var addAndHandleRequest = (path, verb, method, lambda) => {
     var event = buildEventFromRequestTemplate(path, req, method, contentType);
 
 
-    lambda.hander(event)
+    lambda.handler(event)
       .then(body => {
         transformResponse(res, method, body, contentType);
       })
