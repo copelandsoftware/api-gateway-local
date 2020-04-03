@@ -1,20 +1,10 @@
 var parser = require('swagger-parser');
 var express = require('express');
-var fs = require('fs');
-var Q = require('q');
 var app = express();
 var mappingTemplate = require("api-gateway-mapping-template");
 
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low + 1) + low);
-}
-
-var context = {
-  done: (err, obj) => { throw new Error('Using Context Succeed/Fail are Deprecated when using NodeJS 4.3 on Lambda'); },
-
-  success: (obj) => { done(null, obj); },
-
-  fail: (err) => { done(err, null); }
 }
 
 var expressify_path = path => {
@@ -123,7 +113,8 @@ var addAndHandleRequest = (path, verb, method, lambda) => {
     var contentType = req.headers['content-type'] || 'application/json';
     var event = buildEventFromRequestTemplate(path, req, method, contentType);
 
-    Q.ninvoke(lambda, 'handler', event, context)
+
+    lambda.hander(event)
       .then(body => {
         transformResponse(res, method, body, contentType);
       })
@@ -134,7 +125,6 @@ var addAndHandleRequest = (path, verb, method, lambda) => {
 }
 
 module.exports = (lambda, swaggerFile, port, callback) => {
-  var deferred = Q.defer();
   const listenPort = port ? port : randomInt(9000, 10000);
 
   app.use(function(req, res, next) {
@@ -146,7 +136,7 @@ module.exports = (lambda, swaggerFile, port, callback) => {
     });
   });
 
-  parser.validate(swaggerFile)
+  return parser.validate(swaggerFile)
     .then(swaggerDef => {
       Object.keys(swaggerDef.paths).forEach(path => {
         var curPath = swaggerDef.paths[path];
@@ -157,12 +147,10 @@ module.exports = (lambda, swaggerFile, port, callback) => {
       })
       var httpServer = app.listen(listenPort, () => {
         httpServer.port = listenPort;
-        deferred.resolve(httpServer);
+        return httpServer;
       });
     })
     .catch(err => {
-      deferred.reject(new Error(err));
+      return Promise.reject(err);
     })
-
-  return deferred.promise;
 }
