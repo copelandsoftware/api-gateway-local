@@ -127,30 +127,32 @@ var addAndHandleRequest = (path, verb, method, lambda) => {
 module.exports = (lambda, swaggerFile, port, callback) => {
   const listenPort = port ? port : randomInt(9000, 10000);
 
-  app.use(function(req, res, next) {
-    req.rawBody = '';
-    req.setEncoding('utf8');
-    req.on('data', function(chunk) { req.rawBody += chunk; });
-    req.on('end', function() {
-      next();
-    });
-  });
-
-  return parser.validate(swaggerFile)
-    .then(swaggerDef => {
-      Object.keys(swaggerDef.paths).forEach(path => {
-        var curPath = swaggerDef.paths[path];
-        Object.keys(curPath).forEach(verb => {
-
-          addAndHandleRequest(path, verb, curPath[verb], lambda);
-        })
-      })
-      var httpServer = app.listen(listenPort, () => {
-        httpServer.port = listenPort;
-        return httpServer;
+  return new Promise((resolve, reject) => {
+    app.use(function(req, res, next) {
+      req.rawBody = '';
+      req.setEncoding('utf8');
+      req.on('data', function(chunk) { req.rawBody += chunk; });
+      req.on('end', function() {
+        next();
       });
-    })
-    .catch(err => {
-      return Promise.reject(err);
-    })
+    });
+
+    parser.validate(swaggerFile)
+      .then(swaggerDef => {
+        Object.keys(swaggerDef.paths).forEach(path => {
+          var curPath = swaggerDef.paths[path];
+          Object.keys(curPath).forEach(verb => {
+
+            addAndHandleRequest(path, verb, curPath[verb], lambda);
+          })
+        })
+        var httpServer = app.listen(listenPort, () => {
+          httpServer.port = listenPort;
+          resolve(httpServer)
+        });
+      })
+      .catch(err => {
+        reject(err);
+      })
+  });
 }
