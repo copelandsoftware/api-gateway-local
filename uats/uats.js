@@ -2,7 +2,6 @@ var mockery = require('mockery');
 var request = require('request-json');
 var http = require('request');
 var expect = require('chai').expect;
-var Q = require('q');
 
 var server = {};
 var startApiGateway = () => {
@@ -33,222 +32,203 @@ context('uats', () => {
   })
 
   context('DELETE', () => {
-    it('Transforms body to include Query Params', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback();
+    it('Transforms body to include Query Params', async () => {
+      testLambda.handler = async (event) => {
+        return ''
       };
 
-      del('/clients/1234')
-        .then(data => {
-          expect(data.body).to.equal('')
-        })
-        .done(done);
+      const res = await del('/clients/1234')
+      expect(res.body).to.equal('')
     });
   });
 
   context('GET', () => {
-    it('Transforms body to include Query Params', done => {
-      testLambda.handler = (event, context, callback) => {
+    it('Transforms body to include Query Params', async () => {
+      testLambda.handler = async (event) => {
         capturedEvent = event;
-        callback(null, null);
+        return null
       };
-      get('salesforce/tokens/?env=test')
-        .then(data => {
-          console.log(capturedEvent);
-          expect(capturedEvent.env).to.equal('test');
-        })
-        .done(done);
+
+      await get('salesforce/tokens/?env=test')
+
+      expect(capturedEvent.env).to.equal('test');
     });
 
-    it('Transforms body to include Paramters from Request Uri', done => {
-      testLambda.handler = (event, context, callback) => {
+    it('Transforms body to include Paramters from Request Uri', async () => {
+      testLambda.handler = async (event) => {
         capturedEvent = event;
-        callback(null, null);
+        return null
       };
-      get('salesforce/test/tokens')
-        .then(data => {
-          console.log(capturedEvent);
-          expect(capturedEvent.env).to.equal('test');
-        })
-        .done(done);
+
+
+      await get('salesforce/test/tokens')
+
+      expect(capturedEvent.env).to.equal('test');
     });
 
-    it('Transforms Payload to add properties', done => {
-      testLambda.handler = (event, context, callback) => {
+    it('Transforms Payload to add properties', async () => {
+      testLambda.handler = async (event) => {
         capturedEvent = event;
-        callback(null, null);
+        return null
       };
 
-      get('salesforce/tokens/?env=test')
-        .then(data => {
-          expect(capturedEvent.action).to.equal('get');
-        })
-        .done(done);
+      await get('salesforce/tokens/?env=test')
+
+      expect(capturedEvent.action).to.equal('get');
     });
 
-    it('Transforms Status Code', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback('Not Found', null);
+    it('Transforms Status Code', async () => {
+      const error = new Error('Not Found')
+
+      testLambda.handler = async (event) => {
+        throw error
       };
 
-      get('salesforce/tokens/?env=test')
-        .then(data => {
-          console.log(data.res.statusCode);
-          expect(data.res.statusCode).to.equal(404);
-        })
-        .done(done);
+      const data = await get('salesforce/tokens/?env=test')
+
+      expect(data.res.statusCode).to.equal(404);
     })
 
-    it('Wraps error responses in errorMessage per Amazon if responseTemplate not specified', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback({ token:  "test" }, null);
+    it('Wraps error responses in errorMessage per Amazon if responseTemplate not specified', async () => {
+      const error = new Error({ token: "test" })
+
+      testLambda.handler = async (event) => {
+        throw error
       };
 
-      get('salesforce/tokens/?env=test')
-        .then(data => {
-          var obj = { token: "test" }
-          expect(data.body).to.deep.equal({errorMessage: obj.toString() });
-        })
-        .done(done);
+      const data = await get('salesforce/tokens/?env=test')
+
+      expect(data.body).to.deep.equal({ errorMessage: `${error}` });
     })
 
-    it('does not wrap success responses when no template specified', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback(null, { token:  "test" });
+    it('does not wrap success responses when no template specified', async () => {
+      testLambda.handler = async (event) => {
+        return { token: "test" }
       };
 
-      get('salesforce/tokens/?env=test')
-        .then(data => {
-          expect(data.body).to.deep.equal({ token: "test" });
-        })
-        .done(done);
+      const data = await get('salesforce/tokens/?env=test')
+
+      expect(data.body).to.deep.equal({ token: "test" });
     })
 
-    it('Transforms Response can clear body', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback(null, { location:  "test" });
+    it('Transforms Response can clear body', async () => {
+      testLambda.handler = async (event) => {
+        return { location: "test" }
       };
 
-      get('salesforce/')
-        .then(data => {
-          expect(data.body).to.deep.equal({});
-        })
-        .done(done);
+      const data = await get('salesforce/')
+
+      expect(data.body).to.deep.equal({});
     });
 
-    it('Transforms Response Add Headers', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback(null, { location:  "test" });
+    it('Transforms Response Add Headers', async () => {
+      testLambda.handler = async (event) => {
+        return { location: "test" }
       };
 
-      get('salesforce/')
-        .then(data => {
-          expect(data.res.headers['location']).to.equal('test');
-          expect(data.body).to.deep.equal({});
-        })
-        .done(done);
+      const data = await get('salesforce/')
+
+      expect(data.res.headers['location']).to.equal('test');
+      expect(data.body).to.deep.equal({});
     });
 
-    it('handles JSON Posts', done => {
-      testLambda.handler = (event, context, callback) => {
-        console.log(event);
-        if ( event.payload ) {
-          return callback(null, event);
+    it('handles JSON Posts', async () => {
+      testLambda.handler = async (event) => {
+        if (event.payload) {
+          return event
         }
-        callback('Forbidden')
+        throw new Error('Forbidden')
       }
 
-      post('/login', { username: 'test' })
-        .then(data => {
-          expect(data.res.statusCode).to.equal(302);
-          expect(data.body).to.deep.equal({ payload: { username: 'test' }})
-        })
-        .done(done);
+      const data = await post('/login', { username: 'test' })
+
+      expect(data.res.statusCode).to.equal(302);
+      expect(data.body).to.deep.equal({ payload: { username: 'test' } })
+
     })
 
-    it('handles WWW Form Encoded  Posts', done => {
-      testLambda.handler = (event, context, callback) => {
-        console.log(event);
-        if ( event.form_data ) {
-          return callback(null, event);
+    it('handles WWW Form Encoded  Posts', async () => {
+      testLambda.handler = async (event) => {
+        if (event.form_data) {
+          return event;
         }
-        callback('Forbidden')
+
+        throw new Error('Forbidden')
       }
 
-      post_form('/login', { username: 'test' })
-        .then(data => {
-          expect(data.res.statusCode).to.equal(302);
-          // request does not auto parse the body for us.  request-json (above test) does.
-          expect(JSON.parse(data.body)).to.deep.equal({ form_data: "username=test" })
-        })
-        .done(done);
-    })
+      const data = await post_form('/login', { username: 'test' })
 
-    it('wraps errorMessage before processing template', done => {
-      testLambda.handler = (event, context, callback) => {
-        callback('invalid', null);
+      expect(data.res.statusCode).to.equal(302);
+      expect(JSON.parse(data.body)).to.deep.equal({ form_data: "username=test" });
+    });
+
+    it('wraps errorMessage before processing template', async () => {
+      const error = new Error('invalid')
+      
+      testLambda.handler = async (event) => {
+        throw error
       }
 
-      post('/login', { username: 'test' })
-        .then(data => {
-          expect(data.res.statusCode).to.equal(400);
-          expect(data.body).to.deep.equal({ error: 'invalid' })
-        })
-        .done(done);
+      const data = await post('/login', { username: 'test' })
+
+      expect(data.res.statusCode).to.equal(400);
+      expect(data.body).to.deep.equal({ error: `${error}` })   
     });
   });
 });
 
 var post_form = (resource, data) => {
-  var deferred = Q.defer();
   var base = 'http://localhost:8080'
-  http.post({ url: `${base}${resource}`, form: data}, (err, res, body) => {
-    if ( err ) {
-      deferred.reject(err);
-    } else {
-      deferred.resolve({res: res, body: body})
-    }
+
+  return new Promise((resolve, reject) => {
+    http.post({ url: `${base}${resource}`, form: data }, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ res: res, body: body })
+      }
+    })
   })
-  return deferred.promise;
 }
 
 var post = (resource, data) => {
-  var deferred = Q.defer();
   var client = request.createClient('http://localhost:8080/');
-  client.post(resource, data, (err, res, body) => {
-    if ( err ) {
-      deferred.reject(err);
-    } else {
-      deferred.resolve({res: res, body: body})
-    }
-  });
-  return deferred.promise;
+
+  return new Promise((resolve, reject) => {
+    client.post(resource, data, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ res: res, body: body })
+      }
+    });
+  })
 }
 
 var get = resource => {
-  var deferred = Q.defer();
-
   var client = request.createClient('http://localhost:8080/');
-  client.get(resource, (err, res, body) => {
-    if ( err ) {
-      deferred.reject(err);
-    } else {
-      deferred.resolve({res: res, body: body})
-    }
+
+  return new Promise((resolve, reject) => {
+    client.get(resource, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ res: res, body: body })
+      }
+    });
   });
-  return deferred.promise;
 }
 
 var del = resource => {
-  var deferred = Q.defer();
-
   var client = request.createClient('http://localhost:8080/');
-  client.delete(resource, (err, res, body) => {
-    if ( err ) {
-      deferred.reject(err);
-    } else {
-      deferred.resolve({res: res, body: body})
-    }
-  });
-  return deferred.promise;
+
+  return new Promise((resolve, reject) => {
+    client.delete(resource, (err, res, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({ res: res, body: body })
+      }
+    });
+  })
 }
