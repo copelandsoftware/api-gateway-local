@@ -3,14 +3,14 @@ var express = require('express');
 var app = express();
 var mappingTemplate = require("api-gateway-mapping-template");
 
-function randomInt (low, high) {
-    return Math.floor(Math.random() * (high - low + 1) + low);
+function randomInt(low, high) {
+  return Math.floor(Math.random() * (high - low + 1) + low);
 }
 
 var expressify_path = path => {
   return path.split('/')
-    .map( segment => {
-      if ( /^{[a-zA-Z0-9._-]+}$/.test(segment) ) {
+    .map(segment => {
+      if (/^{[a-zA-Z0-9._-]+}$/.test(segment)) {
         return `:${segment.replace(/^{/, '').replace(/}$/, '')}`
       }
       return segment;
@@ -41,7 +41,7 @@ var transformStatus = (body, method) => {
   var statusCode = null;
   Object.keys(responses).forEach(response => {
     var result = new RegExp(response).test(body)
-    if ( result ) {
+    if (result) {
       statusCode = responses[response];
     }
   });
@@ -49,7 +49,7 @@ var transformStatus = (body, method) => {
   return statusCode ? statusCode : responses.default;
 }
 
-Object.byString = function(o, s) {
+Object.byString = function (o, s) {
   s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
   s = s.replace(/^\./, '');           // strip a leading dot
   var a = s.split('.');
@@ -65,17 +65,17 @@ Object.byString = function(o, s) {
 }
 
 var transformResponseParameters = (res, status, body) => {
-  if ( status.responseParameters ) {
+  if (status.responseParameters) {
     var response = {
       integration: {
-        response:  {
+        response: {
           body: body
         }
       }
     };
     Object.keys(status.responseParameters).forEach(param => {
       var value = Object.byString(response, status.responseParameters[param]);
-      if ( value && param.toLowerCase().indexOf('header') !== -1 ) {
+      if (value && param.toLowerCase().indexOf('header') !== -1) {
         var params = param.split('.');
         var headerName = params[params.length - 1];
         res.set(headerName, value);
@@ -91,13 +91,16 @@ var transformResponse = (res, method, body, contentType, isError) => {
   res.set('Content-Type', 'application/json');
 
   if (isError) {
-    if ( typeof body === 'object' ) {
+    if (typeof body === 'object') {
+      console.log('body: ', body)
       body = body.toString()
+      console.log('body: ', body)
     }
     body = { errorMessage: body };
+    console.log('body: ', body)
   }
 
-  if ( status.responseTemplates && body ) {
+  if (status.responseTemplates && body) {
     body = JSON.parse(mappingTemplate({
       template: status.responseTemplates[contentType] || status.responseTemplates['application/json'],
       payload: body instanceof Object ? JSON.stringify(body) : body
@@ -114,13 +117,15 @@ var addAndHandleRequest = (path, verb, method, lambda) => {
     var event = buildEventFromRequestTemplate(path, req, method, contentType);
 
 
-    lambda.handler(event)
-      .then(body => {
-        transformResponse(res, method, body, contentType);
-      })
-      .catch(err => {
-        transformResponse(res, method, err, contentType, true);
-      });
+    lambda.handler(event, null, (err, response) => {
+      if (err) {
+        transformResponse(res, method, err, contentType, true)
+        return;
+      }
+
+      transformResponse(res, method, response, contentType)
+    });
+    
   });
 }
 
@@ -128,11 +133,11 @@ module.exports = (lambda, swaggerFile, port, callback) => {
   const listenPort = port ? port : randomInt(9000, 10000);
 
   return new Promise((resolve, reject) => {
-    app.use(function(req, res, next) {
+    app.use(function (req, res, next) {
       req.rawBody = '';
       req.setEncoding('utf8');
-      req.on('data', function(chunk) { req.rawBody += chunk; });
-      req.on('end', function() {
+      req.on('data', function (chunk) { req.rawBody += chunk; });
+      req.on('end', function () {
         next();
       });
     });
