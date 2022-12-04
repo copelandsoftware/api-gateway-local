@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "api-gateway-mapping-template": "github:emersonsoftware/api-gateway-mapping-template",
-    "express": "^4.14.0",
+    "express": "^4.17.3",
     "js-yaml": "^3.6.1",
     "swagger-parser": "^10.0.3"
   },
